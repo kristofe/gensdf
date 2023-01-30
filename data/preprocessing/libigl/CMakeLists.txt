@@ -53,7 +53,7 @@ endif()
 
 set_property(GLOBAL PROPERTY __igl_module_path ${CMAKE_MODULE_PATH})
 
-set(LIBIGL_DEFAULT_CGAL ${LIBIGL_TOPLEVEL_PROJECT})
+set(LIBIGL_DEFAULT_CGAL True) #${LIBIGL_TOPLEVEL_PROJECT})
 set(MATLAB_ADDITIONAL_VERSIONS
     "R2022b=10.3"
     "R2022a=10.2"
@@ -91,7 +91,8 @@ option(LIBIGL_EMBREE           "Build target igl::embree"           ${LIBIGL_TOP
 #option(LIBIGL_GLFW             "Build target igl::glfw"             ${LIBIGL_TOPLEVEL_PROJECT})
 set(LIBIGL_GLFW True)
 option(LIBIGL_IMGUI            "Build target igl::imgui"            ${LIBIGL_TOPLEVEL_PROJECT})
-option(LIBIGL_OPENGL           "Build target igl::opengl"           ${LIBIGL_TOPLEVEL_PROJECT})
+#option(LIBIGL_OPENGL           "Build target igl::opengl"           ${LIBIGL_TOPLEVEL_PROJECT})
+set(LIBIGL_OPENGL True)
 option(LIBIGL_PNG              "Build target igl::png"              ${LIBIGL_TOPLEVEL_PROJECT})
 option(LIBIGL_PREDICATES       "Build target igl::predicates"       ${LIBIGL_TOPLEVEL_PROJECT})
 option(LIBIGL_XML              "Build target igl::xml"              ${LIBIGL_TOPLEVEL_PROJECT})
@@ -99,8 +100,7 @@ option(LIBIGL_XML              "Build target igl::xml"              ${LIBIGL_TOP
 # Copyleft modules. These modules are available under GPL license, and their dependencies are
 # available under a copyleft license.
 option(LIBIGL_COPYLEFT_CORE    "Build target igl_copyleft::core"    ${LIBIGL_TOPLEVEL_PROJECT})
-#option(LIBIGL_COPYLEFT_CGAL    "Build target igl_copyleft::cgal"    ${LIBIGL_DEFAULT_CGAL})
-set(LIBIGL_CGAL True)
+option(LIBIGL_COPYLEFT_CGAL    "Build target igl_copyleft::cgal"    ${LIBIGL_DEFAULT_CGAL})
 option(LIBIGL_COPYLEFT_COMISO  "Build target igl_copyleft::comiso"  ${LIBIGL_TOPLEVEL_PROJECT})
 option(LIBIGL_COPYLEFT_TETGEN  "Build target igl_copyleft::tetgen"  ${LIBIGL_TOPLEVEL_PROJECT})
 
