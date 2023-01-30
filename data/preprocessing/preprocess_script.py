@@ -69,7 +69,8 @@ def run_sdf_gen(root_dir, class_name):
 
 arg_parser = argparse.ArgumentParser()
 #arg_parser.add_argument('--split_file', '-s', default='sv2_sofas_train.json')
-arg_parser.add_argument('--root_dir', '-r', default='../DeepSDF/data/SdfSamples/acronym')
+#arg_parser.add_argument('--root_dir', '-r', default='../DeepSDF/data/SdfSamples/acronym')
+arg_parser.add_argument('--root_dir', '-r', default='../acronym')
 arg_parser.add_argument('--class_name', '-c', nargs="+")
 #arg_parser.add_argument('--output_dir', '-o', default='../DeepSDF/data/SDFSamples/ShapeNetV2')
 #arg_parser.add_argument('--mkdir', action='store_true')
