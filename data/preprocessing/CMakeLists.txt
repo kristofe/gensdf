@@ -20,4 +20,4 @@ option(LIBIGL_WITH_CGAL              "Use CGAL"           ON)
 # Add your project files
 file(GLOB SRCFILES sdf_gen.cpp)
 add_executable(${PROJECT_NAME} ${SRCFILES})
-target_link_libraries(${PROJECT_NAME} igl::core igl::glfw igl::cgal)
+target_link_libraries(${PROJECT_NAME} igl::core igl::glfw CGAL::CGAL)
