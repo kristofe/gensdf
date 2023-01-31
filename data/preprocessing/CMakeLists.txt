@@ -3,6 +3,7 @@ project(sdf_gen)
 
 
 #RUN THIS: sudo apt-get install xorg-dev libglu1-mesa-dev
+#sudo apt-get install m4
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libigl/cmake)

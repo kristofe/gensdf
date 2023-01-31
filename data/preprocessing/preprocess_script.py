@@ -66,7 +66,7 @@ def run_sdf_gen(root_dir, class_name):
             shutil.rmtree(mesh)
 
 
-
+t
 arg_parser = argparse.ArgumentParser()
 #arg_parser.add_argument('--split_file', '-s', default='sv2_sofas_train.json')
 #arg_parser.add_argument('--root_dir', '-r', default='../DeepSDF/data/SdfSamples/acronym')
