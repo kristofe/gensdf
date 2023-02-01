@@ -51,8 +51,9 @@ void write_matrix_to_csv(
 
 int main(int argc, char * argv[])
 {
-  std::cout << "Reading the input mesh...\n";
   std::string mesh_file = argv[1]; // mesh file path
+  std::cout << "Reading the input mesh " << mesh_file << std::endl;
+
   Eigen::MatrixXd mesh_v; // mesh vertices
   Eigen::MatrixXi mesh_f; // mesh face
   igl::read_triangle_mesh(mesh_file, mesh_v, mesh_f);

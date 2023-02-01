@@ -66,7 +66,7 @@ def run_sdf_gen(root_dir, class_name):
             shutil.rmtree(mesh)
 
 
-t
+
 arg_parser = argparse.ArgumentParser()
 #arg_parser.add_argument('--split_file', '-s', default='sv2_sofas_train.json')
 #arg_parser.add_argument('--root_dir', '-r', default='../DeepSDF/data/SdfSamples/acronym')
@@ -86,7 +86,7 @@ if args.class_name == ["all"]:
     # for c in classes:
     #     print("processing {}".format(c))
     #     run_sdf_gen(args.root_dir, c)
-    for idx in range(start_idx, len(classes)):
+    for idx in range(len(classes)):
         print("processing {}".format(classes[idx]))
         run_sdf_gen(args.root_dir, classes[idx])
 
