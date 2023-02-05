@@ -52,7 +52,7 @@ def playground():
 def load_mesh(path):
     return igl.read_triangle_mesh(str(path))
 
-def importance_rejection_old(self, sdf, beta, max_samples, split=0.9):
+def importance_rejection(self, sdf, beta, max_samples, split=0.9):
     score_channel = 3
     score = np.exp((-beta)*np.abs(sdf[:,score_channel])) 
     noise = np.random.randn(score.shape[0]) * 0.1
@@ -113,7 +113,10 @@ if __name__=="__main__":
     importance_beta = 30
     for (model_path, object_id, class_id) in paths:
         print(model_path)
-        v, f = load_mesh(model_path)
+        if os.path.exists(model_path):
+            print("Correct Path")
+        
+        #v, f = load_mesh(model_path)
         print(f"loaded {model_counter}/{model_count}")
         model_counter += 1
         if v.shape[0] == 0 or f.shape[0] == 0:
