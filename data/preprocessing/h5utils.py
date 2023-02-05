@@ -1,6 +1,4 @@
-# libigl --> HAS TO BE IN A DIFFERENT VIRTUAL ENVIRONMENT THAN PYTORCH
-# conda install -c conda-forge igl 
-# conda install -c conda-forge meshplot 
+# pip install libigl, h5py
 #
 # https://libigl.github.io/libigl-python-bindings/tutorials/
 #
@@ -52,7 +50,7 @@ def playground():
 def load_mesh(path):
     return igl.read_triangle_mesh(str(path))
 
-def importance_rejection(self, sdf, beta, max_samples, split=0.9):
+def importance_rejection(sdf, beta, max_samples, split=0.9):
     score_channel = 3
     score = np.exp((-beta)*np.abs(sdf[:,score_channel])) 
     noise = np.random.randn(score.shape[0]) * 0.1
@@ -83,11 +81,11 @@ if __name__=="__main__":
     arg_parser = argparse.ArgumentParser()
     #arg_parser.add_argument('--split_file', '-s', default='sv2_sofas_train.json')
     #arg_parser.add_argument('--root_dir', '-r', default='../DeepSDF/data/SdfSamples/acronym')
-    arg_parser.add_argument('--shapenetsem_root_dir', default='~/Documents/Projects/datasets/shapenet_sem/models/')
-    arg_parser.add_argument('--acronym_root_dir', default='../acronym/grasps/')
+    arg_parser.add_argument('--shapenetsem_root_dir', default='../datasets/shapenet_sem/models/')
+    arg_parser.add_argument('--acronym_root_dir', default='data/acronym/grasps/')
     arg_parser.add_argument('--glob_pattern',  default='*.h5')
     arg_parser.add_argument('--class_name', '-c', nargs="+")
-    arg_parser.add_argument('--output_dir', '-o', default='~/Documents/Projects/datasets/acronym_sdf_samples/')
+    arg_parser.add_argument('--output_dir', '-o', default='../datasets/shapenet_sem/sdfs/')
     #arg_parser.add_argument('--mkdir', action='store_true')
 
     args = arg_parser.parse_args()
@@ -102,7 +100,7 @@ if __name__=="__main__":
                 model = f['object/file'][()]
                 filepath = pathlib.Path(str(model)) 
                 shapenet_id = filepath.stem
-                object_class = filepath.parts[-2:-1]
+                object_class = filepath.parts[-2:-1][0]
                 shapenet_model_path = f'{args.shapenetsem_root_dir}{str(shapenet_id)}.obj'
                 paths.append((shapenet_model_path, shapenet_id, object_class))
     
@@ -111,14 +109,21 @@ if __name__=="__main__":
     sample_count = 1000000
     target_sample_count = 250000
     importance_beta = 30
+
+    #make sure target dir exists
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+
     for (model_path, object_id, class_id) in paths:
+        print(f"loading {model_counter}/{model_count}")
         print(model_path)
-        if os.path.exists(model_path):
-            print("Correct Path")
-        
-        #v, f = load_mesh(model_path)
-        print(f"loaded {model_counter}/{model_count}")
         model_counter += 1
+
+        if not os.path.exists(model_path):
+            print(f"cannot find {model_path}")
+
+        
+        v, f = load_mesh(model_path)
         if v.shape[0] == 0 or f.shape[0] == 0:
             continue
 
@@ -130,15 +135,14 @@ if __name__=="__main__":
         # Thingy10k has 22% non-manifold models so the pseudonormal method can't be used
         # ACRONYM should have 100% manifold meshes so pseudonormal method (the fast one) can be used
         # The following function is multithreaded and will use all of the cpu cores on a machine.
-        (signed_distances, face_indices, closest_points) = igl.signed_distance(points,v, f, return_normals=True)
+        (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(points,v, f, return_normals=True)
 
         sdf = np.stack((points[:,0], points[:,1], points[:,2], signed_distances), axis=-1)
         sdf = importance_rejection(sdf, beta=importance_beta, max_samples=target_sample_count, split=1.0)
         valid_sample_count = sdf.shape[0]
         np.random.shuffle(sdf)
-        target_path = args.output_dir
+
+        target_path = f"{args.output_dir}{object_id}.npz"
         np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=model_path, beta=importance_beta, classid=class_id, modelid=object_id)
         print(f'saved {target_path}')
-
-        break
                 
