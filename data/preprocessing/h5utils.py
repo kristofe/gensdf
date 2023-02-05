@@ -1,6 +1,5 @@
 # pip install libigl, h5py
-#
-# https://libigl.github.io/libigl-python-bindings/tutorials/
+# https://github.com/libigl/libigl-python-bindings/blob/main/tutorial/igl_docs.md
 #
 # for better meshes and normal/gradient calculation use the 
 # following to convert shapenet
@@ -49,6 +48,18 @@ def playground():
 
 def load_mesh(path):
     return igl.read_triangle_mesh(str(path))
+
+def normalize_mesh_bbox(V):
+    max = np.amax(V,axis=0)
+    min = np.amin(V,axis=0)
+    norm = np.linalg.norm(max - min)
+    V = V/norm
+    return V
+
+def recenter_mesh(V, F):
+    V,F,C = igl.centroid(V,F)
+    V = V - C
+    return V
 
 def importance_rejection(sdf, beta, max_samples, split=0.9):
     score_channel = 3
@@ -124,9 +135,13 @@ if __name__=="__main__":
 
         
         v, f = load_mesh(model_path)
+
+
         if v.shape[0] == 0 or f.shape[0] == 0:
             continue
 
+        v = normalize_mesh_bbox(v)
+        v = recenter_mesh(v,f)
 
         #FIXME: Sample points logic should be lifted from GenSDF logic (c++ code)
         #This will take the sample points outside the -0.5 to 0.5 range!!!... Center the model before normalizing!!!!!
