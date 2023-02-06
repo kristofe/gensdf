@@ -11,6 +11,8 @@ import numpy as np
 import os
 import argparse 
 import pathlib
+import trimesh
+import torch
 cwd = os.getcwd()
 
 
@@ -49,17 +51,61 @@ def playground():
 def load_mesh(path):
     return igl.read_triangle_mesh(str(path))
 
-def normalize_mesh_bbox(V):
+
+def gensdf_sample(path, output_dir, object_id, class_id):
+
+    print(f"Reading the input mesh {path}")
+    m = trimesh.load(path)
+    igl_v, igl_f = igl.read_triangle_mesh(str(path))
+
+
+    if(m.is_watertight == False):
+        raise(Exception(f"{path} is not watertight"))
+
+    #recenter mesh
+    print("recentering")
+    centroid = m.centroid
+    V = m.vertices
+    V = V - centroid
+
+    #normalize bbox
+    print("normalizing mesh")
     max = np.amax(V,axis=0)
     min = np.amin(V,axis=0)
     norm = np.linalg.norm(max - min)
     V = V/norm
-    return V
 
-def recenter_mesh(V, F):
-    V,F,C = igl.centroid(V,F)
-    V = V - C
-    return V
+    m.vertices = V
+
+    print("sampling points")
+    num_samples = 500000
+    num_samples_from_surface = (int)(47 * num_samples / 100)
+    num_samples_near_surface = num_samples - num_samples_from_surface
+    pc = trimesh.sample.sample_surface(m. num_samples_from_surface)
+
+
+    print("sampling query points...")
+    variance = 0.005
+    second_variance = variance / 10.0
+    perturb_norm1 = torch.normal(mean=0, std=torch.sqrt(variance), size=(num_samples_from_surface) )
+    perturb_norm2 = torch.normal(mean=0, std=torch.sqrt(second_variance),size=(num_samples_from_surface))
+    #REPLACE BY PYTORCH or NUMPY normal
+
+    querypoints1 = pc + pc * perturb_norm1
+    querypoints2 = pc + pc * perturb_norm2
+
+    querypoints = torch.cat((querypoints1,querypoints2), dim=0)
+
+    print("computing signed distances...")
+    (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(querypoints,igl_v, igl_f, return_normals=True)
+
+    print("saving results...")
+    sdf = np.stack((querypoints[:,0], querypoints[:,1], querypoints[:,2], signed_distances), axis=-1)
+    np.random.shuffle(sdf)
+
+    target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
+    np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=str(path), beta=importance_beta, classid=class_id, modelid=object_id)
+    print(f'saved {target_path}')
 
 def importance_rejection(sdf, beta, max_samples, split=0.9):
     score_channel = 3
@@ -139,9 +185,6 @@ if __name__=="__main__":
 
         if v.shape[0] == 0 or f.shape[0] == 0:
             continue
-
-        v = normalize_mesh_bbox(v)
-        v = recenter_mesh(v,f)
 
         #FIXME: Sample points logic should be lifted from GenSDF logic (c++ code)
         #This will take the sample points outside the -0.5 to 0.5 range!!!... Center the model before normalizing!!!!!
