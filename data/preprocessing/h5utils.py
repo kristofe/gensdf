@@ -5,6 +5,26 @@
 # following to convert shapenet
 # https://github.com/autonomousvision/occupancy_networks/tree/master/external/mesh-fusion
 
+'''
+Using the full ACRONYM dataset
+Download the full dataset (1.6GB): acronym.tar.gz
+Download the ShapeNetSem meshes from https://www.shapenet.org/
+
+Create watertight versions of the downloaded meshes:
+Clone and build: https://github.com/hjwdzh/Manifold
+
+(There is a better version: https://github.com/hjwdzh/ManifoldPlus but clearly the version below worked for the paper)
+Create a watertight mesh version assuming the object path is model.obj:
+    manifold model.obj temp.watertight.obj -s
+Simplify it: 
+    simplify -i temp.watertight.obj -o model.obj -m -r 0.02
+
+For more details about the structure of the ACRONYM dataset see: https://sites.google.com/nvidia.com/graspdataset
+
+
+
+
+'''
 import igl
 import h5py
 import numpy as np
@@ -14,6 +34,9 @@ import pathlib
 import trimesh
 import torch
 import math
+import subprocess
+
+
 cwd = os.getcwd()
 
 
@@ -221,4 +244,10 @@ if __name__=="__main__":
 
         # really inefficient to reopen the mesh etc.  just testing right now.
         gensdf_sample(model_path, args.output_dir, object_id, class_id)
+
+
+        args = ("build/sdf_gen",  model_path, args.output_dir, "|| true")
+        print(f'Running {args}')
+        popen = subprocess.Popen(args, stderr=subprocess.DEVNULL)
+        popen.wait()
                 
