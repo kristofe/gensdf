@@ -13,6 +13,7 @@ import argparse
 import pathlib
 import trimesh
 import torch
+import math
 cwd = os.getcwd()
 
 
@@ -93,8 +94,8 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     print("sampling query points...")
     variance = 0.005
     second_variance = variance / 10.0
-    perturb_norm1 = torch.normal(mean=0, std=torch.sqrt(variance), size=(num_samples_from_surface) )
-    perturb_norm2 = torch.normal(mean=0, std=torch.sqrt(second_variance),size=(num_samples_from_surface))
+    perturb_norm1 = torch.normal(mean=0.0, std=math.sqrt(variance), size=(num_samples_from_surface,) )
+    perturb_norm2 = torch.normal(mean=0.0, std=math.sqrt(second_variance),size=(num_samples_from_surface,))
     #REPLACE BY PYTORCH or NUMPY normal
 
     querypoints1 = pc + pc * perturb_norm1
