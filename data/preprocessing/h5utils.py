@@ -246,8 +246,8 @@ if __name__=="__main__":
         gensdf_sample(model_path, args.output_dir, object_id, class_id)
 
 
-        args = ("build/sdf_gen",  model_path, args.output_dir, "|| true")
-        print(f'Running {args}')
+        args = ("data/preprocessing/build/sdf_gen",  model_path, args.output_dir, "|| true")
+        print(f'Running {args} from cdw {os.getcwd()}')
         popen = subprocess.Popen(args, stderr=subprocess.DEVNULL)
         popen.wait()
                 
