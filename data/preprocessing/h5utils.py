@@ -55,12 +55,18 @@ def load_mesh(path):
 def gensdf_sample(path, output_dir, object_id, class_id):
 
     print(f"Reading the input mesh {path}")
-    m = trimesh.load(path)
+    scene = trimesh.load(path)
     igl_v, igl_f = igl.read_triangle_mesh(str(path))
 
 
-    if(m.is_watertight == False):
-        raise(Exception(f"{path} is not watertight"))
+    meshes = []
+    for key, geom in scene.geometry.items():
+        meshes.append(geom)
+        if(geom.is_watertight == False):
+            print(f"{path} is not watertight")
+            break
+            #raise(Exception(f"{path} is not watertight"))
+    m = trimesh.util.concatenate(meshes)
 
     #recenter mesh
     print("recentering")
@@ -74,15 +80,15 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     min = np.amin(V,axis=0)
     norm = np.linalg.norm(max - min)
     V = V/norm
-
+    
     m.vertices = V
 
     print("sampling points")
     num_samples = 500000
     num_samples_from_surface = (int)(47 * num_samples / 100)
     num_samples_near_surface = num_samples - num_samples_from_surface
-    pc = trimesh.sample.sample_surface(m. num_samples_from_surface)
-
+    pc = trimesh.sample.sample_surface(m, num_samples_from_surface)
+    pc = pc[0]
 
     print("sampling query points...")
     variance = 0.005
@@ -142,6 +148,7 @@ if __name__=="__main__":
     arg_parser.add_argument('--acronym_root_dir', default='data/acronym/grasps/')
     arg_parser.add_argument('--glob_pattern',  default='*.h5')
     arg_parser.add_argument('--class_name', '-c', nargs="+")
+    arg_parser.add_argument( "--max_model_count", type=int, default=-1)
     arg_parser.add_argument('--output_dir', '-o', default='../datasets/shapenet_sem/sdfs/')
     #arg_parser.add_argument('--mkdir', action='store_true')
 
@@ -151,6 +158,10 @@ if __name__=="__main__":
     shapenetsem_root = pathlib.Path(args.shapenetsem_root_dir)
     all_paths = root.glob(args.glob_pattern)
     paths = []
+
+    args.max_model_count = 1
+    counter = 0
+    max_model_count = 100000000 if args.max_model_count == -1 else args.max_model_count
     for h5_filename in all_paths:
         if h5_filename.is_file:
             with h5py.File(h5_filename, "r") as f:
@@ -160,6 +171,9 @@ if __name__=="__main__":
                 object_class = filepath.parts[-2:-1][0]
                 shapenet_model_path = f'{args.shapenetsem_root_dir}{str(shapenet_id)}.obj'
                 paths.append((shapenet_model_path, shapenet_id, object_class))
+            counter += 1
+            if(counter >= max_model_count):
+                break
     
     model_count = len(paths)
     model_counter = 1
@@ -203,4 +217,7 @@ if __name__=="__main__":
         target_path = f"{args.output_dir}{object_id}.npz"
         np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=model_path, beta=importance_beta, classid=class_id, modelid=object_id)
         print(f'saved {target_path}')
+
+        # really inefficient to reopen the mesh etc.  just testing right now.
+        gensdf_sample(model_path, args.output_dir, object_id, class_id)
                 
