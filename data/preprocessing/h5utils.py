@@ -89,13 +89,13 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     num_samples_from_surface = (int)(47 * num_samples / 100)
     num_samples_near_surface = num_samples - num_samples_from_surface
     pc = trimesh.sample.sample_surface(m, num_samples_from_surface)
-    pc = pc[0]
+    pc = torch.from_numpy(pc[0])
 
     print("sampling query points...")
     variance = 0.005
     second_variance = variance / 10.0
-    perturb_norm1 = torch.normal(mean=0.0, std=math.sqrt(variance), size=(num_samples_from_surface,) )
-    perturb_norm2 = torch.normal(mean=0.0, std=math.sqrt(second_variance),size=(num_samples_from_surface,))
+    perturb_norm1 = torch.normal(mean=0.0, std=math.sqrt(variance), size=(num_samples_from_surface,3) )
+    perturb_norm2 = torch.normal(mean=0.0, std=math.sqrt(second_variance),size=(num_samples_from_surface,3))
     #REPLACE BY PYTORCH or NUMPY normal
 
     querypoints1 = pc + pc * perturb_norm1
@@ -104,7 +104,7 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     querypoints = torch.cat((querypoints1,querypoints2), dim=0)
 
     print("computing signed distances...")
-    (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(querypoints,igl_v, igl_f, return_normals=True)
+    (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(querypoints.numpy(),igl_v, igl_f, return_normals=True)
 
     print("saving results...")
     sdf = np.stack((querypoints[:,0], querypoints[:,1], querypoints[:,2], signed_distances), axis=-1)
