@@ -221,7 +221,7 @@ if __name__=="__main__":
     
     model_count = len(paths)
     model_counter = 1
-    sample_count = 1000000
+    sample_count = 2000000
     target_sample_count = 250000
     importance_beta = 30
 
@@ -292,7 +292,7 @@ if __name__=="__main__":
         (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(points,v, f, return_normals=True)
 
         sdf = np.stack((points[:,0], points[:,1], points[:,2], signed_distances), axis=-1)
-        sdf = importance_rejection(sdf, beta=importance_beta, max_samples=target_sample_count, split=0.99)
+        sdf = importance_rejection(sdf, beta=importance_beta, max_samples=target_sample_count, split=0.95)
         valid_sample_count = sdf.shape[0]
         np.random.shuffle(sdf)
 
