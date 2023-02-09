@@ -88,7 +88,7 @@ def gensdf_sample(path, output_dir, object_id, class_id):
 
     print(f"Reading the input mesh {path}")
     m = trimesh.load(path)
-    igl_v, igl_f = igl.read_triangle_mesh(str(path))
+    #igl_v, igl_f = igl.read_triangle_mesh(str(path))
 
 
     if(m.is_watertight == False):
@@ -110,15 +110,16 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     #recenter mesh
     print("recentering")
     centroid = m.centroid
-    V = m.vertices
-    V = V - centroid
+    v = m.vertices
+    f = m.faces
+    v = v - centroid
 
     #normalize bbox
     print("normalizing mesh")
-    max = np.amax(V,axis=0)
-    min = np.amin(V,axis=0)
+    max = np.amax(v,axis=0)
+    min = np.amin(v,axis=0)
     norm = np.linalg.norm(max - min)
-    V = V/norm
+    v = v/norm
     
     #m.update_vertices(V)
 
@@ -128,6 +129,9 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     num_samples_near_surface = num_samples - num_samples_from_surface
     pc = trimesh.sample.sample_surface(m, num_samples_from_surface)
     pc = torch.from_numpy(pc[0])
+
+    pc = pc - centroid
+    pc = pc/norm
 
     print("sampling query points...")
     variance = 0.005
@@ -142,7 +146,7 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     querypoints = torch.cat((querypoints1,querypoints2), dim=0)
 
     print("computing signed distances...")
-    (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(querypoints.numpy(),m.vertices, m.faces, return_normals=True)
+    (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(querypoints.numpy(),v, f, return_normals=True)
 
     print("saving results...")
     sdf = np.stack((querypoints[:,0], querypoints[:,1], querypoints[:,2], signed_distances), axis=-1)
@@ -254,6 +258,21 @@ if __name__=="__main__":
         #FIXME: NEEDS TO BE CENTERED AND INSIDE UNIT CUBE: See gensdf sample
         v, f = load_mesh(manifold_model_path)
 
+        m = trimesh.load(manifold_model_path)
+        #recenter mesh
+        print("recentering")
+        centroid = m.centroid
+        v = m.vertices
+        f = m.faces
+        v = v - centroid
+
+        #normalize bbox
+        print("normalizing mesh")
+        max = np.amax(v,axis=0)
+        min = np.amin(v,axis=0)
+        norm = np.linalg.norm(max - min)
+        v = v/norm
+        
 
         if v.shape[0] == 0 or f.shape[0] == 0:
             continue
@@ -273,7 +292,7 @@ if __name__=="__main__":
         (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(points,v, f, return_normals=True)
 
         sdf = np.stack((points[:,0], points[:,1], points[:,2], signed_distances), axis=-1)
-        sdf = importance_rejection(sdf, beta=importance_beta, max_samples=target_sample_count, split=1.0)
+        sdf = importance_rejection(sdf, beta=importance_beta, max_samples=target_sample_count, split=0.9)
         valid_sample_count = sdf.shape[0]
         np.random.shuffle(sdf)
 
