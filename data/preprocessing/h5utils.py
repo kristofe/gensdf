@@ -22,7 +22,15 @@ Simplify it:
 For more details about the structure of the ACRONYM dataset see: https://sites.google.com/nvidia.com/graspdataset
 
 
+####
+Installing manifold
 
+git clone --recursive -j8 git@github.com:hjwdzh/Manifold.git
+cd Manifold
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make
 
 '''
 import igl
@@ -217,8 +225,21 @@ if __name__=="__main__":
         if not os.path.exists(model_path):
             print(f"cannot find {model_path}")
 
+
+        #Make sure the model is watertight
+        temp_model_path = f"{model_path[:-4]}_tmp_manifold.obj"
+        manifold_model_path = f"{model_path[:-4]}_manifold.obj"
+        args = f"manifold/build/manifold {cwd}/{model_path}  {cwd}/{temp_model_path} -s"
+        print(f'{args}')
+        popen = subprocess.Popen(args, stderr=subprocess.DEVNULL, shell=True)
+        popen.wait()
+
+        args = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02"
+        print(f'{args}')
+        popen = subprocess.Popen(args, stderr=subprocess.DEVNULL, shell=True)
+        popen.wait()
         
-        v, f = load_mesh(model_path)
+        v, f = load_mesh(manifold_model_path)
 
 
         if v.shape[0] == 0 or f.shape[0] == 0:
@@ -239,14 +260,14 @@ if __name__=="__main__":
         np.random.shuffle(sdf)
 
         target_path = f"{args.output_dir}{object_id}.npz"
-        np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=model_path, beta=importance_beta, classid=class_id, modelid=object_id)
+        np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=manifold_model_path, beta=importance_beta, classid=class_id, modelid=object_id)
         print(f'saved {target_path}')
 
         # really inefficient to reopen the mesh etc.  just testing right now.
-        gensdf_sample(model_path, args.output_dir, object_id, class_id)
+        gensdf_sample(manifold_model_path, args.output_dir, object_id, class_id)
 
 
-        args = ("data/preprocessing/build/sdf_gen",  model_path, args.output_dir, "|| true")
+        args = ("data/preprocessing/build/sdf_gen",  manifold_model_path, args.output_dir, "|| true")
         print(f'Running {args} from cdw {os.getcwd()}')
         popen = subprocess.Popen(args, stderr=subprocess.DEVNULL)
         popen.wait()
