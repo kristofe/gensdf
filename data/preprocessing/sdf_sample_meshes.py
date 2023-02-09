@@ -120,7 +120,7 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     norm = np.linalg.norm(max - min)
     V = V/norm
     
-    m.vertices = V
+    #m.update_vertices(V)
 
     print("sampling points")
     num_samples = 500000
@@ -142,7 +142,7 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     querypoints = torch.cat((querypoints1,querypoints2), dim=0)
 
     print("computing signed distances...")
-    (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(querypoints.numpy(),igl_v, igl_f, return_normals=True)
+    (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(querypoints.numpy(),m.vertices, m.faces, return_normals=True)
 
     print("saving results...")
     sdf = np.stack((querypoints[:,0], querypoints[:,1], querypoints[:,2], signed_distances), axis=-1)
