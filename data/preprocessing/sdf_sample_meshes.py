@@ -203,7 +203,7 @@ if __name__=="__main__":
     all_paths = root.glob(args.glob_pattern)
     paths = []
 
-    args.max_model_count = 16
+    args.max_model_count = 500
     counter = 0
     max_model_count = 100000000 if args.max_model_count == -1 else args.max_model_count
     for h5_filename in all_paths:
