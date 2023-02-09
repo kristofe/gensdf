@@ -292,7 +292,7 @@ if __name__=="__main__":
         (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(points,v, f, return_normals=True)
 
         sdf = np.stack((points[:,0], points[:,1], points[:,2], signed_distances), axis=-1)
-        sdf = importance_rejection(sdf, beta=importance_beta, max_samples=target_sample_count, split=0.9)
+        sdf = importance_rejection(sdf, beta=importance_beta, max_samples=target_sample_count, split=0.99)
         valid_sample_count = sdf.shape[0]
         np.random.shuffle(sdf)
 
@@ -304,10 +304,11 @@ if __name__=="__main__":
         gensdf_sample(manifold_model_path, output_dir, object_id, class_id)
 
 
-        command_line = ("data/preprocessing/build/sdf_gen",  manifold_model_path, output_dir, "|| true")
-        print(f'Running {command_line} from cdw {os.getcwd()}')
-        popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL)
-        popen.wait()
+        # No need to run c++ sampler. python version does the same thing.
+        #command_line = ("data/preprocessing/build/sdf_gen",  manifold_model_path, output_dir, "|| true")
+        #print(f'Running {command_line} from cdw {os.getcwd()}')
+        #popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL)
+        #popen.wait()
 
         material_path = f"{model_path[:-4]}.mtl"
         manifold_model_path = f"{model_path[:-4]}_manifold.obj"
