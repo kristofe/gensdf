@@ -60,6 +60,10 @@ conda activate sdf
 **Note**: you might need to install **torch-scatter** manually following [the official instruction](https://github.com/rusty1s/pytorch_scatter#pytorch-140):
 ```
 pip install torch-scatter
+
+# For one of my machines:
+pip install torch-scatter -f https://data.pyg.org/whl/torch-1.12.0+cu113.html
+
 ```
 
 

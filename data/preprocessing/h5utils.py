@@ -25,8 +25,8 @@ For more details about the structure of the ACRONYM dataset see: https://sites.g
 ####
 Installing manifold
 
-git clone --recursive -j8 git@github.com:hjwdzh/Manifold.git
-cd Manifold
+git clone --recursive -j8 git@github.com:hjwdzh/Manifold.git manifold
+cd manifold
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
@@ -234,17 +234,17 @@ if __name__=="__main__":
 
 
         #Make sure the model is watertight
-        #temp_model_path = f"{model_path[:-4]}_tmp_manifold.obj"
+        temp_model_path = f"{model_path[:-4]}_tmp_manifold.obj"
         manifold_model_path = f"{model_path[:-4]}_manifold.obj"
-        command_line = f"manifold/build/manifold {cwd}/{model_path}  {cwd}/{manifold_model_path} -s"
+        command_line = f"manifold/build/manifold {cwd}/{model_path}  {cwd}/{temp_model_path} -s"
         print(f'{command_line}')
         popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
         popen.wait()
 
-        #command_line = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02"
+        command_line = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02"
         #print(f'{command_line}')
-        #popen = subprocess.Popen(args, stderr=subprocess.DEVNULL, shell=True)
-        #popen.wait()
+        popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
+        popen.wait()
         
         v, f = load_mesh(manifold_model_path)
 
