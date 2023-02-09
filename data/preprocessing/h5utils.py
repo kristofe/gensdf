@@ -87,10 +87,16 @@ def load_mesh(path):
 def gensdf_sample(path, output_dir, object_id, class_id):
 
     print(f"Reading the input mesh {path}")
-    scene = trimesh.load(path)
+    m = trimesh.load(path)
     igl_v, igl_f = igl.read_triangle_mesh(str(path))
 
 
+    if(m.is_watertight == False):
+        print(f"{path} is not watertight")
+        #raise(Exception(f"{path} is not watertight"))
+    '''
+    #because the meshes are processed they aren't scenes but are trimeshes
+    scene = trimesh.load(path)
     meshes = []
     for key, geom in scene.geometry.items():
         meshes.append(geom)
@@ -99,6 +105,7 @@ def gensdf_sample(path, output_dir, object_id, class_id):
             break
             #raise(Exception(f"{path} is not watertight"))
     m = trimesh.util.concatenate(meshes)
+    '''
 
     #recenter mesh
     print("recentering")
@@ -227,17 +234,17 @@ if __name__=="__main__":
 
 
         #Make sure the model is watertight
-        temp_model_path = f"{model_path[:-4]}_tmp_manifold.obj"
+        #temp_model_path = f"{model_path[:-4]}_tmp_manifold.obj"
         manifold_model_path = f"{model_path[:-4]}_manifold.obj"
-        args = f"manifold/build/manifold {cwd}/{model_path}  {cwd}/{temp_model_path} -s"
-        print(f'{args}')
-        popen = subprocess.Popen(args, stderr=subprocess.DEVNULL, shell=True)
+        command_line = f"manifold/build/manifold {cwd}/{model_path}  {cwd}/{manifold_model_path} -s"
+        print(f'{command_line}')
+        popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
         popen.wait()
 
-        args = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02"
-        print(f'{args}')
-        popen = subprocess.Popen(args, stderr=subprocess.DEVNULL, shell=True)
-        popen.wait()
+        #command_line = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02"
+        #print(f'{command_line}')
+        #popen = subprocess.Popen(args, stderr=subprocess.DEVNULL, shell=True)
+        #popen.wait()
         
         v, f = load_mesh(manifold_model_path)
 
@@ -267,8 +274,8 @@ if __name__=="__main__":
         gensdf_sample(manifold_model_path, args.output_dir, object_id, class_id)
 
 
-        args = ("data/preprocessing/build/sdf_gen",  manifold_model_path, args.output_dir, "|| true")
-        print(f'Running {args} from cdw {os.getcwd()}')
-        popen = subprocess.Popen(args, stderr=subprocess.DEVNULL)
+        command_line = ("data/preprocessing/build/sdf_gen",  manifold_model_path, args.output_dir, "|| true")
+        print(f'Running {command_line} from cdw {os.getcwd()}')
+        popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL)
         popen.wait()
                 
