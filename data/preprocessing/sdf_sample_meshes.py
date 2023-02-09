@@ -188,7 +188,8 @@ if __name__=="__main__":
     arg_parser.add_argument('--glob_pattern',  default='*.h5')
     arg_parser.add_argument('--class_name', '-c', nargs="+")
     arg_parser.add_argument( "--max_model_count", type=int, default=-1)
-    arg_parser.add_argument('--output_dir', '-o', default='../datasets/shapenet_sem/sdfs/')
+    arg_parser.add_argument( "--separate_folders", type=int, default=1)
+    arg_parser.add_argument('--output_dir', '-o', default='../datasets/shapenet_sem/processed/')
     #arg_parser.add_argument('--mkdir', action='store_true')
 
     args = arg_parser.parse_args()
@@ -198,7 +199,7 @@ if __name__=="__main__":
     all_paths = root.glob(args.glob_pattern)
     paths = []
 
-    args.max_model_count = 1
+    args.max_model_count = 16
     counter = 0
     max_model_count = 100000000 if args.max_model_count == -1 else args.max_model_count
     for h5_filename in all_paths:
@@ -220,9 +221,6 @@ if __name__=="__main__":
     target_sample_count = 250000
     importance_beta = 30
 
-    #make sure target dir exists
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
 
     for (model_path, object_id, class_id) in paths:
         print(f"loading {model_counter}/{model_count}")
@@ -241,16 +239,29 @@ if __name__=="__main__":
         popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
         popen.wait()
 
-        command_line = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02"
+        if(not os.path.exists(temp_model_path)):
+            print(f"Failed to make {model_path} manifold")
+            continue
+        command_line = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02; rm {temp_model_path}"
         #print(f'{command_line}')
         popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
         popen.wait()
+
+        if(not os.path.exists(manifold_model_path)):
+            print(f"Couldn't simplify {model_path} using skipping")
+            continue 
+
         
         v, f = load_mesh(manifold_model_path)
 
 
         if v.shape[0] == 0 or f.shape[0] == 0:
             continue
+
+        output_dir = args.output_dir if args.separate_folders == 0 else f"{args.output_dir}/{object_id}/"
+
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
         #FIXME: Sample points logic should be lifted from GenSDF logic (c++ code)
         #This will take the sample points outside the -0.5 to 0.5 range!!!... Center the model before normalizing!!!!!
@@ -266,16 +277,23 @@ if __name__=="__main__":
         valid_sample_count = sdf.shape[0]
         np.random.shuffle(sdf)
 
-        target_path = f"{args.output_dir}{object_id}.npz"
+        target_path = f"{output_dir}{object_id}.npz"
         np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=manifold_model_path, beta=importance_beta, classid=class_id, modelid=object_id)
         print(f'saved {target_path}')
 
         # really inefficient to reopen the mesh etc.  just testing right now.
-        gensdf_sample(manifold_model_path, args.output_dir, object_id, class_id)
+        gensdf_sample(manifold_model_path, output_dir, object_id, class_id)
 
 
-        command_line = ("data/preprocessing/build/sdf_gen",  manifold_model_path, args.output_dir, "|| true")
+        command_line = ("data/preprocessing/build/sdf_gen",  manifold_model_path, output_dir, "|| true")
         print(f'Running {command_line} from cdw {os.getcwd()}')
         popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL)
         popen.wait()
+
+        material_path = f"{model_path[:-4]}.mtl"
+        manifold_model_path = f"{model_path[:-4]}_manifold.obj"
+        command_line = f"cp {model_path} {material_path} {manifold_model_path} {output_dir}/"
+        popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
+        popen.wait()
+
                 
