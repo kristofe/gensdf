@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -13,30 +14,24 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_dir", default="shapenet/mesh_sdfs/", type=str, metavar="DIR")
+    parser.add_argument("--dataset_dir", default="../datasets/shapenet_sem/processed/", type=str, metavar="DIR")
     parser.add_argument("--sample_count", type=int, default=10000000)
     parser.add_argument("--target_sample_count", type=int, default=1000000)
     parser.add_argument("--importance_beta", type=int, default=30) #Overfit paper was 30
     parser.add_argument("--is_grid", action="store_true", default=False)
 
     args = parser.parse_args()
-    args.dataset_dir = "eraseme/"
-    fname = "d18f2aeae4146464bd46d022fd7d80aa.npz"
-    with np.load(args.dataset_dir + fname) as f:
-        df_pointspos = f['neg'] 
-        df_pointsneg = f['pos'] 
-        df_points = np.concatenate((df_pointsneg,df_pointspos), axis=0)
-    '''
-    args.dataset_dir = "shapenet/mesh_sdfs_test/"
-    fname = "dist100_chair_4918512f624696278b424343280aeccb_points_grid.npz"
-    with np.load(args.dataset_dir + fname) as f:
-        df_points = f['sdf_points'] 
-        filename = f['filename'] 
-        vmax = f['vmax'] 
-        vmin = f['vmin'] 
-        importance_beta = f['beta']
+    #args.dataset_dir = "../datasets/shapenet_sem/processed/"
+    #fname = "9ff8c2118a1e9796be58c5ebb087be4f/9ff8c2118a1e9796be58c5ebb087be4f_gensdf_sampling.npz"
+    fname = "9ff8c2118a1e9796be58c5ebb087be4f/sdf_data.csv"
+    if(fname[-4:] == ".csv"):
+        df_points =pd.read_csv(args.dataset_dir + fname, sep=',',header=None).values
+    else:
+        with np.load(args.dataset_dir + fname) as f:
+            df_points = f['sdf_points'] 
+            filename = f['filename'] 
+            importance_beta = f['beta']
     print(f"loaded {fname} shape: {df_points.shape}")
-    '''
     
     plt.figure()
     ax = plt.axes(projection="3d")
