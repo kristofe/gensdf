@@ -251,7 +251,7 @@ if __name__=="__main__":
             print(f"Couldn't simplify {model_path} using skipping")
             continue 
 
-        
+        #FIXME: NEEDS TO BE CENTERED AND INSIDE UNIT CUBE: See gensdf sample
         v, f = load_mesh(manifold_model_path)
 
 

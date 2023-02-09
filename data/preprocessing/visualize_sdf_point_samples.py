@@ -22,8 +22,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     #args.dataset_dir = "../datasets/shapenet_sem/processed/"
-    #fname = "9ff8c2118a1e9796be58c5ebb087be4f/9ff8c2118a1e9796be58c5ebb087be4f_gensdf_sampling.npz"
-    fname = "9ff8c2118a1e9796be58c5ebb087be4f/9ff8c2118a1e9796be58c5ebb087be4f.npz"
+    fname = "9ff8c2118a1e9796be58c5ebb087be4f/9ff8c2118a1e9796be58c5ebb087be4f_gensdf_sampling.npz"
+    #fname = "9ff8c2118a1e9796be58c5ebb087be4f/9ff8c2118a1e9796be58c5ebb087be4f.npz"
     #fname = "9ff8c2118a1e9796be58c5ebb087be4f/sdf_data.csv"
     if(fname[-4:] == ".csv"):
         df_points =pd.read_csv(args.dataset_dir + fname, sep=',',header=None).values
