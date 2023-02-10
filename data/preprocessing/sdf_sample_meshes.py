@@ -25,6 +25,8 @@ For more details about the structure of the ACRONYM dataset see: https://sites.g
 ####
 Installing manifold
 
+Install into root of project/manifold
+
 git clone --recursive -j8 git@github.com:hjwdzh/Manifold.git manifold
 cd manifold
 mkdir build
