@@ -10,6 +10,11 @@
 
 
 #####
+# To remove an existing blender: 
+#
+# sudo snap remove blender
+#
+#
 # Installing blender:
 #
 # sudo snap install blender --channel=2.93lts/stable --classic
