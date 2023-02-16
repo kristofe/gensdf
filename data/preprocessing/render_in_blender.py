@@ -25,6 +25,8 @@
 
 import argparse, sys, os, math, re
 import bpy
+import bmesh
+from mathutils import Vector
 from glob import glob
 
 parser = argparse.ArgumentParser(description='Renders given obj file by rotation a camera around it.')
@@ -171,6 +173,43 @@ bpy.ops.object.select_all(action='DESELECT')
 bpy.ops.import_scene.obj(filepath=args.obj)
 
 obj = bpy.context.selected_objects[0]
+
+bbox = obj.bound_box
+print(bbox)
+bbox_dims = [(bbox[i][j] - bbox[i+4][j]) for i in range(3) for j in range(3)]
+
+# Determine the maximum dimension
+max_dim = max(bbox_dims)
+
+# Scale object to fit into unit cube
+scale_factor = 1 / max_dim
+obj.scale = (scale_factor, scale_factor, scale_factor)
+
+#center and scale object
+mesh = obj.data
+# Create a BMesh from the mesh data
+bm = bmesh.new()
+bm.from_mesh(mesh)
+
+# Get the mesh's centroid
+centroid = Vector()
+for vert in bm.verts:
+    centroid += obj.matrix_world @ vert.co
+centroid /= len(bm.verts)
+
+# Move the object's origin to the centroid
+obj.location -= obj.matrix_world.inverted() @ centroid
+
+# Scale the object to be size 1
+#min_coord, max_coord = bm.calc_tight_bounds()
+#size = max(max_coord - min_coord)
+#obj.scale *= 1 / size
+
+# Update the mesh data and the object's transformation matrix
+bm.to_mesh(mesh)
+mesh.update()
+obj.matrix_world.translation = obj.location
+
 context.view_layer.objects.active = obj
 
 # Possibly disable specular shading
