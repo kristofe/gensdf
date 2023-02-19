@@ -152,6 +152,9 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     print("computing signed distances...")
     (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(querypoints.numpy(),v, f, return_normals=True)
 
+    #zero_ids = np.abs(signed_distances) < 1e-8
+    #signed_distances[zero_ids] = 0.0
+
     print("saving results...")
     sdf = np.stack((querypoints[:,0], querypoints[:,1], querypoints[:,2], signed_distances), axis=-1)
     #np.random.shuffle(sdf)

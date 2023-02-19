@@ -122,10 +122,10 @@ class UnLabeledDS(base.Dataset):
     def sample_pointcloud(self, f):
         #FIXME: #There are no zero points in the current sampling
         #THIS IS A CHECK TO SEE IF THERE IS A PRECISION PROBLEM
-        zero_ids = np.abs(f[:,-1]) < 1e-6
+        zero_ids = np.abs(f[:,-1]) < 1e-10
         f = f[zero_ids][:,:3]  
 
-        f = f[f[:,-1]==0][:,:3]  
+        #f = f[f[:,-1]==0][:,:3]  
         f = torch.from_numpy(f)
         pc_idx = torch.randperm(f.shape[0])[0:self.pc_size]
 
