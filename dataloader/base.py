@@ -100,7 +100,7 @@ class Dataset(torch.utils.data.Dataset):
                 for class_name in split[dataset]:
                     for instance_name in split[dataset][class_name]:
                         #instance_filename = os.path.join(data_source, dataset, class_name, instance_name, f'{instance_name}.npz')
-                        instance_filename = f'../datasets/shapenet_sem/sdfs/{instance_name}_gensdf_sampling.npz'
+                        instance_filename = f'../datasets/shapenet_sem/processed/{instance_name}/{instance_name}_gensdf_sampling.npz'
                         
                         if not os.path.isfile(instance_filename):
                             logging.warning("Requested non-existent file '{}'".format(instance_filename))
