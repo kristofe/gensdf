@@ -123,7 +123,8 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     norm = np.linalg.norm(max - min)
     v = v/norm
     
-    #m.update_vertices(V)
+    #m.update_vertices(v)
+
 
     print("sampling points")
     num_samples = 500000
@@ -145,14 +146,15 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     querypoints1 = pc + pc * perturb_norm1
     querypoints2 = pc + pc * perturb_norm2
 
-    querypoints = torch.cat((querypoints1,querypoints2), dim=0)
+    querypoints = torch.cat((pc, querypoints1,querypoints2), dim=0)
+    #querypoints = torch.cat([pc,pc], dim=0)
 
     print("computing signed distances...")
     (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(querypoints.numpy(),v, f, return_normals=True)
 
     print("saving results...")
     sdf = np.stack((querypoints[:,0], querypoints[:,1], querypoints[:,2], signed_distances), axis=-1)
-    np.random.shuffle(sdf)
+    #np.random.shuffle(sdf)
 
     target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
     np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=str(path), beta=importance_beta, classid=class_id, modelid=object_id)
@@ -205,7 +207,7 @@ if __name__=="__main__":
     all_paths = root.glob(args.glob_pattern)
     paths = []
 
-    args.max_model_count = 500
+    args.max_model_count = 2
     counter = 0
     max_model_count = 100000000 if args.max_model_count == -1 else args.max_model_count
     for h5_filename in all_paths:
