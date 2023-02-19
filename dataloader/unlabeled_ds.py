@@ -103,7 +103,9 @@ class UnLabeledDS(base.Dataset):
         with tqdm(self.unlab_files) as pbar:
             for i, f in enumerate(pbar):
                 pbar.set_description("Files processed: {}/{}".format(i, len(self.unlab_files)))
-                f=pd.read_csv(f, sep=',',header=None).values
+                #f=pd.read_csv(f, sep=',',header=None).values
+                fp = np.load(f)
+                f = fp["sdf_points"]
                 pc = self.sample_pointcloud(f)  
                 query_points = self.sample_query(pc) 
 
@@ -118,7 +120,8 @@ class UnLabeledDS(base.Dataset):
 
 
     def sample_pointcloud(self, f):
-        f = f[f[:,-1]==0][:,:3]
+        #FIXME: #There are no zero points in the current sampling
+        f = f[f[:,-1]==0][:,:3]  
         f = torch.from_numpy(f)
         pc_idx = torch.randperm(f.shape[0])[0:self.pc_size]
 

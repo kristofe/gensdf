@@ -80,8 +80,7 @@ class Dataset(torch.utils.data.Dataset):
 
         return pc.float().squeeze(), samples[:,:3].float().squeeze(), samples[:, 3].float().squeeze() # pc, xyz, sdv
 
-
-    def get_instance_filenames(self, data_source, split, gt_filename="sdf_data.csv"):
+    def get_instance_filenames_csv(self, data_source, split, gt_filename="sdf_data.csv"):
             csvfiles = []
             for dataset in split: # e.g. "acronym" "shapenet"
                 for class_name in split[dataset]:
@@ -94,3 +93,18 @@ class Dataset(torch.utils.data.Dataset):
 
                         csvfiles.append(instance_filename)
             return csvfiles
+
+    def get_instance_filenames(self, data_source, split):
+            files = []
+            for dataset in split: # e.g. "acronym" "shapenet"
+                for class_name in split[dataset]:
+                    for instance_name in split[dataset][class_name]:
+                        #instance_filename = os.path.join(data_source, dataset, class_name, instance_name, f'{instance_name}.npz')
+                        instance_filename = f'../datasets/shapenet_sem/sdfs/{instance_name}_gensdf_sampling.npz'
+                        
+                        if not os.path.isfile(instance_filename):
+                            logging.warning("Requested non-existent file '{}'".format(instance_filename))
+                            continue
+
+                        files.append(instance_filename)
+            return files

@@ -175,7 +175,8 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument(
         "--exp_dir", "-e",
-        required=True,
+        default='config/gensdf/semi',
+        #required=True,
         help="This directory should include experiment specifications in 'specs.json,' and logging will be done in this directory as well.",
     )
     arg_parser.add_argument(
