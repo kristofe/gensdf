@@ -289,7 +289,7 @@ if __name__=="__main__":
                 print(f"Couldn't load {model_path} skipping")
 
             #recenter mesh
-            print("recentering")
+            print(f"recentering {len(m.vertices)} vertices")
             centroid = m.centroid
             v = m.vertices
             f = m.faces
@@ -313,6 +313,7 @@ if __name__=="__main__":
             # Thingy10k has 22% non-manifold models so the pseudonormal method can't be used
             # ACRONYM should have 100% manifold meshes so pseudonormal method (the fast one) can be used
             # The following function is multithreaded and will use all of the cpu cores on a machine.
+            print("computing distances")
             (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(points,v, f, return_normals=True)
 
             sdf = np.stack((points[:,0], points[:,1], points[:,2], signed_distances), axis=-1)
@@ -328,6 +329,7 @@ if __name__=="__main__":
         if(os.path.exists(manifold_model_path) and 
           (not os.path.exists(pc_sampling_target_path) or force)):
             # really inefficient to reopen the mesh etc.  just testing right now.
+            print("sampling point cloud")
             gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path)
 
 
