@@ -86,7 +86,7 @@ def load_mesh(path):
     return igl.read_triangle_mesh(str(path))
 
 
-def gensdf_sample(path, output_dir, object_id, class_id):
+def gensdf_sample(path, object_id, class_id, target_path):
 
     print(f"Reading the input mesh {path}")
     m = trimesh.load(path)
@@ -159,7 +159,6 @@ def gensdf_sample(path, output_dir, object_id, class_id):
     sdf = np.stack((querypoints[:,0], querypoints[:,1], querypoints[:,2], signed_distances), axis=-1)
     #np.random.shuffle(sdf)
 
-    target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
     np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=str(path), beta=importance_beta, classid=class_id, modelid=object_id)
     print(f'saved {target_path}')
 
@@ -201,16 +200,19 @@ if __name__=="__main__":
     arg_parser.add_argument( "--max_model_count", type=int, default=-1)
     arg_parser.add_argument( "--separate_folders", type=int, default=1)
     arg_parser.add_argument('--output_dir', '-o', default='../datasets/shapenet_sem/processed/')
+    arg_parser.add_argument( "--force", type=int, default=0)
     #arg_parser.add_argument('--mkdir', action='store_true')
 
     args = arg_parser.parse_args()
+
+    force = False if args.force == 0 else True
 
     root = pathlib.Path(args.acronym_root_dir)
     shapenetsem_root = pathlib.Path(args.shapenetsem_root_dir)
     all_paths = root.glob(args.glob_pattern)
     paths = []
 
-    args.max_model_count = 2
+    args.max_model_count = 8
     counter = 0
     max_model_count = 100000000 if args.max_model_count == -1 else args.max_model_count
     for h5_filename in all_paths:
@@ -242,73 +244,82 @@ if __name__=="__main__":
             print(f"cannot find {model_path}")
 
 
-        #Make sure the model is watertight
+        npz_output_path = f"{output_dir}{object_id}.npz"
         temp_model_path = f"{model_path[:-4]}_tmp_manifold.obj"
         manifold_model_path = f"{model_path[:-4]}_manifold.obj"
-        command_line = f"manifold/build/manifold {cwd}/{model_path}  {cwd}/{temp_model_path} -s"
-        print(f'{command_line}')
-        popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
-        popen.wait()
 
-        if(not os.path.exists(temp_model_path)):
-            print(f"Failed to make {model_path} manifold")
-            continue
-        command_line = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02; rm {temp_model_path}"
-        #print(f'{command_line}')
-        popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
-        popen.wait()
+        if(not os.path.exists(temp_model_path) or force):
+            #Make sure the model is watertight
+            command_line = f"manifold/build/manifold {cwd}/{model_path}  {cwd}/{temp_model_path} -s"
+            print(f'{command_line}')
+            popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
+            popen.wait()
 
-        if(not os.path.exists(manifold_model_path)):
-            print(f"Couldn't simplify {model_path} using skipping")
-            continue 
-
-        #FIXME: NEEDS TO BE CENTERED AND INSIDE UNIT CUBE: See gensdf sample
-        v, f = load_mesh(manifold_model_path)
-
-        m = trimesh.load(manifold_model_path)
-        #recenter mesh
-        print("recentering")
-        centroid = m.centroid
-        v = m.vertices
-        f = m.faces
-        v = v - centroid
-
-        #normalize bbox
-        print("normalizing mesh")
-        max = np.amax(v,axis=0)
-        min = np.amin(v,axis=0)
-        norm = np.linalg.norm(max - min)
-        v = v/norm
+            if(not os.path.exists(temp_model_path)):
+                print(f"Failed to make {model_path} manifold")
+                continue
         
+        if(not os.path.exists(manifold_model_path) or force):
+            command_line = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02; rm {temp_model_path}"
+            #print(f'{command_line}')
+            popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
+            popen.wait()
 
-        if v.shape[0] == 0 or f.shape[0] == 0:
-            continue
+            if(not os.path.exists(manifold_model_path)):
+                print(f"Couldn't simplify {model_path} using skipping")
+                continue 
 
-        output_dir = args.output_dir if args.separate_folders == 0 else f"{args.output_dir}/{object_id}/"
+        if(not os.path.exists(manifold_model_path) or force):
+            #FIXME: NEEDS TO BE CENTERED AND INSIDE UNIT CUBE: See gensdf sample
+            v, f = load_mesh(manifold_model_path)
 
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+            m = trimesh.load(manifold_model_path)
+            #recenter mesh
+            print("recentering")
+            centroid = m.centroid
+            v = m.vertices
+            f = m.faces
+            v = v - centroid
 
-        #FIXME: Sample points logic should be lifted from GenSDF logic (c++ code)
-        #This will take the sample points outside the -0.5 to 0.5 range!!!... Center the model before normalizing!!!!!
-        sample_count = int(sample_count)
-        points = np.random.uniform(-0.5, 0.5, (sample_count,3))
-        # Thingy10k has 22% non-manifold models so the pseudonormal method can't be used
-        # ACRONYM should have 100% manifold meshes so pseudonormal method (the fast one) can be used
-        # The following function is multithreaded and will use all of the cpu cores on a machine.
-        (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(points,v, f, return_normals=True)
+            #normalize bbox
+            print("normalizing mesh")
+            max = np.amax(v,axis=0)
+            min = np.amin(v,axis=0)
+            norm = np.linalg.norm(max - min)
+            v = v/norm
+            
 
-        sdf = np.stack((points[:,0], points[:,1], points[:,2], signed_distances), axis=-1)
-        sdf = importance_rejection(sdf, beta=importance_beta, max_samples=target_sample_count, split=0.95)
-        valid_sample_count = sdf.shape[0]
-        np.random.shuffle(sdf)
+            if v.shape[0] == 0 or f.shape[0] == 0:
+                continue
 
-        target_path = f"{output_dir}{object_id}.npz"
-        np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=manifold_model_path, beta=importance_beta, classid=class_id, modelid=object_id)
-        print(f'saved {target_path}')
+            output_dir = args.output_dir if args.separate_folders == 0 else f"{args.output_dir}/{object_id}/"
 
-        # really inefficient to reopen the mesh etc.  just testing right now.
-        gensdf_sample(manifold_model_path, output_dir, object_id, class_id)
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+
+            #FIXME: Sample points logic should be lifted from GenSDF logic (c++ code)
+            #This will take the sample points outside the -0.5 to 0.5 range!!!... Center the model before normalizing!!!!!
+            sample_count = int(sample_count)
+            points = np.random.uniform(-0.5, 0.5, (sample_count,3))
+            # Thingy10k has 22% non-manifold models so the pseudonormal method can't be used
+            # ACRONYM should have 100% manifold meshes so pseudonormal method (the fast one) can be used
+            # The following function is multithreaded and will use all of the cpu cores on a machine.
+            (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(points,v, f, return_normals=True)
+
+            sdf = np.stack((points[:,0], points[:,1], points[:,2], signed_distances), axis=-1)
+            sdf = importance_rejection(sdf, beta=importance_beta, max_samples=target_sample_count, split=0.95)
+            valid_sample_count = sdf.shape[0]
+            np.random.shuffle(sdf)
+
+            
+            np.savez(npz_output_path,sdf_points=sdf.astype(np.float32), filename=manifold_model_path, beta=importance_beta, classid=class_id, modelid=object_id)
+            print(f'saved {npz_output_path}')
+
+        pc_sampling_target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
+        if(os.path.exists(manifold_model_path)
+         and (not os.path.exists(pc_sampling_target_path) or force)):
+            # really inefficient to reopen the mesh etc.  just testing right now.
+            gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path)
 
 
         # No need to run c++ sampler. python version does the same thing.
