@@ -290,9 +290,14 @@ if __name__=="__main__":
                 continue
 
             try:
-                m = trimesh.load(manifold_model_path)
+                m = trimesh.load_mesh(manifold_model_path, force=True)
+                if(not isinstance(m, trimesh.Trimesh)):
+                    print(f"couldn't coerce {manifold_model_path} into a single mesh")
+                    continue
+
             except:
                 print(f"Couldn't load {model_path} skipping")
+                continue
 
             #recenter mesh
             print(f"recentering {len(m.vertices)} vertices")
