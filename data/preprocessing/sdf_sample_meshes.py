@@ -244,9 +244,12 @@ if __name__=="__main__":
             print(f"cannot find {model_path}")
 
 
-        npz_output_path = f"{output_dir}{object_id}.npz"
+        output_dir = args.output_dir if args.separate_folders == 0 else f"{args.output_dir}/{object_id}/"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
         temp_model_path = f"{model_path[:-4]}_tmp_manifold.obj"
         manifold_model_path = f"{model_path[:-4]}_manifold.obj"
+        npz_output_path = f"{output_dir}{object_id}.npz"
 
         if(not os.path.exists(temp_model_path) or force):
             #Make sure the model is watertight
@@ -269,7 +272,8 @@ if __name__=="__main__":
                 print(f"Couldn't simplify {model_path} using skipping")
                 continue 
 
-        if(not os.path.exists(manifold_model_path) or force):
+        if(os.path.exists(manifold_model_path) and
+          (not os.path.exists(npz_output_path) or force)):
             #FIXME: NEEDS TO BE CENTERED AND INSIDE UNIT CUBE: See gensdf sample
             v, f = load_mesh(manifold_model_path)
 
@@ -292,11 +296,6 @@ if __name__=="__main__":
             if v.shape[0] == 0 or f.shape[0] == 0:
                 continue
 
-            output_dir = args.output_dir if args.separate_folders == 0 else f"{args.output_dir}/{object_id}/"
-
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-
             #FIXME: Sample points logic should be lifted from GenSDF logic (c++ code)
             #This will take the sample points outside the -0.5 to 0.5 range!!!... Center the model before normalizing!!!!!
             sample_count = int(sample_count)
@@ -316,8 +315,8 @@ if __name__=="__main__":
             print(f'saved {npz_output_path}')
 
         pc_sampling_target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
-        if(os.path.exists(manifold_model_path)
-         and (not os.path.exists(pc_sampling_target_path) or force)):
+        if(os.path.exists(manifold_model_path) and 
+          (not os.path.exists(pc_sampling_target_path) or force)):
             # really inefficient to reopen the mesh etc.  just testing right now.
             gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path)
 
