@@ -86,7 +86,7 @@ def load_mesh(path):
     return igl.read_triangle_mesh(str(path))
 
 
-def gensdf_sample(path, object_id, class_id, target_path):
+def gensdf_sample(path, object_id, class_id, target_path, use_normals):
 
     print(f"Reading the input mesh {path}")
     m = trimesh.load(path)
@@ -150,7 +150,11 @@ def gensdf_sample(path, object_id, class_id, target_path):
     #querypoints = torch.cat([pc,pc], dim=0)
 
     print("computing signed distances...")
-    (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(querypoints.numpy(),v, f, return_normals=True)
+    if use_normals:
+        (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(querypoints.numpy(),v, f, return_normals=True)
+    else:
+        (signed_distances, face_indices, closest_points) = igl.signed_distance(querypoints.numpy(),v, f, return_normals=False)
+
 
     #zero_ids = np.abs(signed_distances) < 1e-8
     #signed_distances[zero_ids] = 0.0
@@ -251,6 +255,7 @@ if __name__=="__main__":
         manifold_model_path = f"{model_path[:-4]}_manifold.obj"
         npz_output_path = f"{output_dir}{object_id}.npz"
 
+        simplified = True
         if(not os.path.exists(manifold_model_path) or force):
             #Make sure the model is watertight
             command_line = f"manifold/build/manifold {cwd}/{model_path}  {cwd}/{temp_model_path} -s"
@@ -270,6 +275,7 @@ if __name__=="__main__":
 
             if(not os.path.exists(manifold_model_path)):
                 print(f"Couldn't simplify {model_path} using full resolution")
+                simplified = False
                 shutil.copyfile(temp_model_path, manifold_model_path)
                 if os.path.isfile(temp_model_path):
                     os.remove(temp_model_path)
@@ -314,7 +320,10 @@ if __name__=="__main__":
             # ACRONYM should have 100% manifold meshes so pseudonormal method (the fast one) can be used
             # The following function is multithreaded and will use all of the cpu cores on a machine.
             print("computing distances")
-            (signed_distances, face_indices, closest_points) = igl.signed_distance(points,v, f, return_normals=False)
+            if simplified:
+                (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(points,v, f, return_normals=True)
+            else:
+                (signed_distances, face_indices, closest_points) = igl.signed_distance(points,v, f, return_normals=False)
 
             sdf = np.stack((points[:,0], points[:,1], points[:,2], signed_distances), axis=-1)
             sdf = importance_rejection(sdf, beta=importance_beta, max_samples=target_sample_count, split=0.95)
@@ -330,7 +339,7 @@ if __name__=="__main__":
           (not os.path.exists(pc_sampling_target_path) or force)):
             # really inefficient to reopen the mesh etc.  just testing right now.
             print("sampling point cloud")
-            gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path)
+            gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path, use_normals=simplified)
 
 
         # No need to run c++ sampler. python version does the same thing.
