@@ -45,7 +45,7 @@ import trimesh
 import torch
 import math
 import subprocess
-
+import shutil
 
 cwd = os.getcwd()
 
@@ -212,7 +212,7 @@ if __name__=="__main__":
     all_paths = root.glob(args.glob_pattern)
     paths = []
 
-    args.max_model_count = 8
+    #args.max_model_count = 8
     counter = 0
     max_model_count = 100000000 if args.max_model_count == -1 else args.max_model_count
     for h5_filename in all_paths:
@@ -251,7 +251,7 @@ if __name__=="__main__":
         manifold_model_path = f"{model_path[:-4]}_manifold.obj"
         npz_output_path = f"{output_dir}{object_id}.npz"
 
-        if(not os.path.exists(temp_model_path) or force):
+        if(not os.path.exists(manifold_model_path) or force):
             #Make sure the model is watertight
             command_line = f"manifold/build/manifold {cwd}/{model_path}  {cwd}/{temp_model_path} -s"
             print(f'{command_line}')
@@ -261,23 +261,33 @@ if __name__=="__main__":
             if(not os.path.exists(temp_model_path)):
                 print(f"Failed to make {model_path} manifold")
                 continue
-        
-        if(not os.path.exists(manifold_model_path) or force):
-            command_line = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02; rm {temp_model_path}"
+
+            #command_line = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02; rm {temp_model_path}"
+            command_line = f"manifold/build/simplify -i {temp_model_path} -o {manifold_model_path} -m -r 0.02"
             #print(f'{command_line}')
             popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
             popen.wait()
 
             if(not os.path.exists(manifold_model_path)):
-                print(f"Couldn't simplify {model_path} using skipping")
-                continue 
+                print(f"Couldn't simplify {model_path} using full resolution")
+                shutil.copyfile(temp_model_path, manifold_model_path)
+                if os.path.isfile(temp_model_path):
+                    os.remove(temp_model_path)
 
         if(os.path.exists(manifold_model_path) and
           (not os.path.exists(npz_output_path) or force)):
             #FIXME: NEEDS TO BE CENTERED AND INSIDE UNIT CUBE: See gensdf sample
-            v, f = load_mesh(manifold_model_path)
+            try:
+                v, f = load_mesh(manifold_model_path)
+            except:
+                print(f"Couldn't load {model_path} skipping")
+                continue
 
-            m = trimesh.load(manifold_model_path)
+            try:
+                m = trimesh.load(manifold_model_path)
+            except:
+                print(f"Couldn't load {model_path} skipping")
+
             #recenter mesh
             print("recentering")
             centroid = m.centroid
