@@ -314,7 +314,7 @@ if __name__=="__main__":
             # ACRONYM should have 100% manifold meshes so pseudonormal method (the fast one) can be used
             # The following function is multithreaded and will use all of the cpu cores on a machine.
             print("computing distances")
-            (signed_distances, face_indices, closest_points, normals) = igl.signed_distance(points,v, f, return_normals=True)
+            (signed_distances, face_indices, closest_points) = igl.signed_distance(points,v, f, return_normals=False)
 
             sdf = np.stack((points[:,0], points[:,1], points[:,2], signed_distances), axis=-1)
             sdf = importance_rejection(sdf, beta=importance_beta, max_samples=target_sample_count, split=0.95)
