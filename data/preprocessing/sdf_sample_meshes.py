@@ -262,7 +262,7 @@ if __name__=="__main__":
         npz_output_path = f"{output_dir}{object_id}.npz"
 
         simplified = True
-        if(not os.path.exists(manifold_model_path) or force):
+        if(not os.path.exists(npz_output_path) or force):
             #Make sure the model is watertight
             command_line = f"manifold/build/manifold {cwd}/{model_path}  {cwd}/{temp_model_path} -s"
             print(f'{command_line}')
@@ -286,8 +286,6 @@ if __name__=="__main__":
                 if os.path.isfile(temp_model_path):
                     os.remove(temp_model_path)
 
-        if(os.path.exists(manifold_model_path) and
-          (not os.path.exists(npz_output_path) or force)):
             #FIXME: NEEDS TO BE CENTERED AND INSIDE UNIT CUBE: See gensdf sample
             try:
                 v, f = load_mesh(manifold_model_path)
@@ -345,9 +343,7 @@ if __name__=="__main__":
             np.savez(npz_output_path,sdf_points=sdf.astype(np.float32), filename=manifold_model_path, beta=importance_beta, classid=class_id, modelid=object_id)
             print(f'saved {npz_output_path}')
 
-        pc_sampling_target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
-        if(os.path.exists(manifold_model_path) and 
-          (not os.path.exists(pc_sampling_target_path) or force)):
+            pc_sampling_target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
             # really inefficient to reopen the mesh etc.  just testing right now.
             print("sampling point cloud")
             gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path, use_normals=simplified)
