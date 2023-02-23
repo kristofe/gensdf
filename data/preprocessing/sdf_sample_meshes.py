@@ -217,6 +217,9 @@ if __name__=="__main__":
     paths = []
 
     #args.max_model_count = 8
+    ignore = [
+        '17a7a1a4761e9aa1d4bf2d5f775ffe5e'
+    ]
     counter = 0
     max_model_count = 100000000 if args.max_model_count == -1 else args.max_model_count
     for h5_filename in all_paths:
@@ -225,6 +228,9 @@ if __name__=="__main__":
                 model = f['object/file'][()]
                 filepath = pathlib.Path(str(model)) 
                 shapenet_id = filepath.stem
+                if shapenet_id in ignore:
+                    print(f"ignoring {shapenet_id}")
+                    continue
                 object_class = filepath.parts[-2:-1][0]
                 shapenet_model_path = f'{args.shapenetsem_root_dir}{str(shapenet_id)}.obj'
                 paths.append((shapenet_model_path, shapenet_id, object_class))
