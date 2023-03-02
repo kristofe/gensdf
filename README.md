@@ -64,6 +64,8 @@ pip install torch-scatter
 # For one of my machines:
 pip install torch-scatter -f https://data.pyg.org/whl/torch-1.12.0+cu113.html
 
+or
+conda install pytorch-scatter -c pyg
 ```
 
 
