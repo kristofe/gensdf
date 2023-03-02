@@ -23,14 +23,14 @@
     "dropout_prob" : 0.0
   },
 
-  "LabSamplesPerMesh":16000,
-  "LabPCsize":1024,
+  "LabSamplesPerMesh":1600,
+  "LabPCsize":102,
 
-  "SampPerMesh" : 130000,
-  "SampFromMesh" : 100000,
-  "SampPerBatch" : 5000,
-  "PCsize" : 5000,
-  "ProcessPC":5000,
+  "SampPerMesh" : 13000,
+  "SampFromMesh" : 10000,
+  "SampPerBatch" : 500,
+  "PCsize" : 500,
+  "ProcessPC":500,
 
   "Alpha":0.1,
 

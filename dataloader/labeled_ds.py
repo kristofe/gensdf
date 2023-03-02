@@ -9,6 +9,7 @@ import torch.utils.data
 from . import base 
 
 import pandas as pd 
+import numpy as np
 import csv
 
 class LabeledDS(base.Dataset):
@@ -27,7 +28,7 @@ class LabeledDS(base.Dataset):
 
     def __getitem__(self, idx): 
         
-        pc, sdf_xyz, sdf_gt =  self.labeled_sampling(self.gt_files[idx], self.samples_per_mesh, self.pc_size)
+        pc, sdf_xyz, sdf_gt =  self.labeled_sampling_npz(self.gt_files[idx], self.samples_per_mesh, self.pc_size)
 
         data_dict = {
                     "sdf_xyz":sdf_xyz.float().squeeze(),

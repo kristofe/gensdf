@@ -51,7 +51,36 @@ class Dataset(torch.utils.data.Dataset):
 
         return torch.from_numpy(f[pc_idx]).float()
 
-    def labeled_sampling(self, f, subsample, pc_size=1024):
+    def labeled_sampling_npz(self, f, subsample, pc_size=1024):
+        f = np.load(f)
+        f = torch.from_numpy(f["sdf_points"])
+
+        half = int(subsample / 2) 
+        neg_tensor = f[f[:,-1]<0]
+        pos_tensor = f[f[:,-1]>0]
+
+        if pos_tensor.shape[0] < half:
+            pos_idx = torch.randint(pos_tensor.shape[0], (half,))
+        else:
+            pos_idx = torch.randperm(pos_tensor.shape[0])[:half]
+
+        if neg_tensor.shape[0] < half:
+            neg_idx = torch.randint(neg_tensor.shape[0], (half,))
+        else:
+            neg_idx = torch.randperm(neg_tensor.shape[0])[:half]
+
+        pos_sample = pos_tensor[pos_idx]
+        neg_sample = neg_tensor[neg_idx]
+
+        pc = f[f[:,-1]==0][:,:3]
+        pc_idx = torch.randperm(pc.shape[0])[:pc_size]
+        pc = pc[pc_idx]
+
+        samples = torch.cat([pos_sample, neg_sample], 0)
+
+        return pc.float().squeeze(), samples[:,:3].float().squeeze(), samples[:, 3].float().squeeze() # pc, xyz, sdv
+
+    def labeled_sampling_csv(self, f, subsample, pc_size=1024):
         f=pd.read_csv(f, sep=',',header=None).values
         f = torch.from_numpy(f)
 
