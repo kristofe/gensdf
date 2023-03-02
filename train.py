@@ -139,7 +139,7 @@ def init_dataset(dataset, specs):
             samples_per_mesh=specs["LabSamplesPerMesh"], pc_size=specs["LabPCsize"]
             ), UnLabeledDS(specs["DataSource"], unlabeled_train_split, 
                 samples_per_mesh=specs["SampPerMesh"], pc_size=specs["PCsize"],
-                samples_per_batch=specs["SampPerBatch"])
+                samples_per_batch=specs["SampPerBatch"], load_files=True)
 
 
     train_split_file = specs["TrainSplit"]
