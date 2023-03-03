@@ -136,10 +136,10 @@ def init_dataset(dataset, specs):
 
         return LabeledDS(
             specs["DataSource"], labeled_train_split, 
-            samples_per_mesh=specs["LabSamplesPerMesh"], pc_size=specs["LabPCsize"]
+            samples_per_mesh=specs["LabSamplesPerMesh"], pc_size=specs["LabPCsize"], max_meshes=specs["max_meshes"]
             ), UnLabeledDS(specs["DataSource"], unlabeled_train_split, 
                 samples_per_mesh=specs["SampPerMesh"], pc_size=specs["PCsize"],
-                samples_per_batch=specs["SampPerBatch"], load_files=True)
+                samples_per_batch=specs["SampPerBatch"], max_meshes=specs["max_meshes"], load_files=True)
 
 
     train_split_file = specs["TrainSplit"]
@@ -194,7 +194,6 @@ if __name__ == "__main__":
         "--workers", "-w",
         default=None, type=int
     )
-
 
     args = arg_parser.parse_args()
     specs = json.load(open(os.path.join(args.exp_dir, "specs.json")))

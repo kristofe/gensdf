@@ -29,7 +29,8 @@ class UnLabeledDS(base.Dataset):
 
         load_files=False,
         save_files=False,
-        save_dir = "preprocessed"
+        save_dir = "preprocessed",
+        max_meshes = 1000
     ):
 
         self.samples_per_mesh = samples_per_mesh
@@ -39,6 +40,8 @@ class UnLabeledDS(base.Dataset):
         self.num_iters = int(samples_per_mesh / samples_per_batch)
 
         self.unlab_files = self.get_instance_filenames(data_source, split_file)
+        if(len(self.unlab_files) > max_meshes):
+            self.unlab_files = self.unlab_files[0:max_meshes]
 
         if load_files:
             print("Loading from saved data...")

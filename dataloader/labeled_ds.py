@@ -19,12 +19,15 @@ class LabeledDS(base.Dataset):
         data_source,
         split_file, # json filepath which contains train/test classes and meshes 
         samples_per_mesh=16000,
-        pc_size=1024
+        pc_size=1024,
+        max_meshes=1000
     ):
 
         self.samples_per_mesh = samples_per_mesh
         self.pc_size = pc_size
         self.gt_files = self.get_instance_filenames(data_source, split_file)
+        if(len(self.gt_files) > max_meshes):
+            self.gt_files = self.gt_files[0:max_meshes]
 
     def __getitem__(self, idx): 
         
