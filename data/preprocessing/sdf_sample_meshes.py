@@ -49,6 +49,7 @@ import torch
 import math
 import subprocess
 import shutil
+import pandas as pd
 
 cwd = os.getcwd()
 
@@ -176,7 +177,8 @@ def gensdf_sample(path, object_id, class_id, target_path, use_normals):
     #np.random.shuffle(sdf)
 
     if(use_csv):
-        np.savetxt(target_path, sdf.astype(np.float32), delimiter=",")
+        #np.savetxt(target_path, sdf.astype(np.float32), delimiter=",")
+        pd.DataFrame(sdf.astype(np.float32)).to_csv(target_path)
     else:
         np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=str(path), beta=importance_beta, classid=class_id, modelid=object_id)
     print(f'saved {target_path}')
@@ -371,7 +373,8 @@ if __name__=="__main__":
             (grid_sdf_values, _, _, _) = igl.signed_distance(grid_query_points, v, f, return_normals=True)
             grid_sdf_values = np.expand_dims(grid_sdf_values, axis=-1)
             grid_sdf = np.concatenate((grid_query_points, grid_sdf_values), axis=-1)
-            np.savetxt(f"{output_dir}/sdf_grid_data.csv", grid_sdf, delimiter=",")
+            #np.savetxt(f"{output_dir}/sdf_grid_data.csv", grid_sdf, delimiter=",")
+            pd.DataFrame(grid_sdf.astype(np.float32)).to_csv(f'{output_dir}/sdf_grid_data.csv')
 
             pc_sampling_target_path = f'{output_dir}/sdf_data.csv'
             #pc_sampling_target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"

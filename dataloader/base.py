@@ -80,7 +80,7 @@ class Dataset(torch.utils.data.Dataset):
 
         return pc.float().squeeze(), samples[:,:3].float().squeeze(), samples[:, 3].float().squeeze() # pc, xyz, sdv
 
-    def labeled_sampling_csv(self, f, subsample, pc_size=1024):
+    def labeled_sampling(self, f, subsample, pc_size=1024):
         f=pd.read_csv(f, sep=',',header=None).values
         f = torch.from_numpy(f)
 
@@ -109,7 +109,7 @@ class Dataset(torch.utils.data.Dataset):
 
         return pc.float().squeeze(), samples[:,:3].float().squeeze(), samples[:, 3].float().squeeze() # pc, xyz, sdv
 
-    def get_instance_filenames_csv(self, data_source, split, gt_filename="sdf_data.csv"):
+    def get_instance_filenames(self, data_source, split, gt_filename="sdf_data.csv"):
             csvfiles = []
             for dataset in split: # e.g. "acronym" "shapenet"
                 for class_name in split[dataset]:
@@ -123,7 +123,7 @@ class Dataset(torch.utils.data.Dataset):
                         csvfiles.append(instance_filename)
             return csvfiles
 
-    def get_instance_filenames(self, data_source, split):
+    def get_instance_filenames_npz(self, data_source, split):
             files = []
             for dataset in split: # e.g. "acronym" "shapenet"
                 for class_name in split[dataset]:
