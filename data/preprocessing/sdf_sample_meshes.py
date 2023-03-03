@@ -99,6 +99,7 @@ def load_mesh(path):
 
 def gensdf_sample(path, object_id, class_id, target_path, use_normals):
 
+    use_csv = True if target_path[-3:].lower() == "csv" else False
     print(f"Reading the input mesh {path}")
     m = trimesh.load(path)
     #igl_v, igl_f = igl.read_triangle_mesh(str(path))
@@ -174,7 +175,10 @@ def gensdf_sample(path, object_id, class_id, target_path, use_normals):
     sdf = np.stack((querypoints[:,0], querypoints[:,1], querypoints[:,2], signed_distances), axis=-1)
     #np.random.shuffle(sdf)
 
-    np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=str(path), beta=importance_beta, classid=class_id, modelid=object_id)
+    if(use_csv):
+        np.savetxt(target_path, sdf.astype(np.float32), delimiter=",")
+    else:
+        np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=str(path), beta=importance_beta, classid=class_id, modelid=object_id)
     print(f'saved {target_path}')
 
 def importance_rejection(sdf, beta, max_samples, split=0.9):
@@ -233,7 +237,8 @@ if __name__=="__main__":
 
     #args.max_model_count = 8
     ignore = [
-        '17a7a1a4761e9aa1d4bf2d5f775ffe5e'
+        '17a7a1a4761e9aa1d4bf2d5f775ffe5e',
+        '16b4dfae678239a42d470147ee1bb468'
     ]
 
     counter = 0
@@ -367,12 +372,15 @@ if __name__=="__main__":
             grid_sdf_values = np.expand_dims(grid_sdf_values, axis=-1)
             grid_sdf = np.concatenate((grid_query_points, grid_sdf_values), axis=-1)
             np.savetxt(f"{output_dir}/sdf_grid_data.csv", grid_sdf, delimiter=",")
+
+            pc_sampling_target_path = f'{output_dir}/sdf_data.csv'
             #pc_sampling_target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
             # really inefficient to reopen the mesh etc.  just testing right now.
-            #print("sampling point cloud")
-            #gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path, use_normals=simplified)
+            print("sampling point cloud")
+            gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path, use_normals=simplified)
 
 
+        '''
         csv_path = f'{output_dir}/sdf_data.csv'
         if(not os.path.exists(csv_path) or force):
             # No need to run c++ sampler. python version does the same thing.
@@ -380,6 +388,7 @@ if __name__=="__main__":
             print(f'Running {command_line} from cdw {os.getcwd()}')
             popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL)
             popen.wait()
+        '''
 
         if(copy_meshes):
             material_path = f"{model_path[:-4]}.mtl"
