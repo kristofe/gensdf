@@ -43,6 +43,6 @@
     "gamma" : 0.5
   },
 
-  "max_meshes" : 100
+  "max_meshes" : 2
 }
 

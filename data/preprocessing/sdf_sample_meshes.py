@@ -34,6 +34,9 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 
+
+TEXT TO SDF
+pip install mesh-to-sdf
 '''
 import igl
 import h5py
@@ -81,6 +84,14 @@ def playground():
         shapenet_id = filepath.stem
         object_class = filepath.parts[-2:-1]
         print(filepath.parts)
+
+def gen_grid(start, end, num):
+    x = np.linspace(start,end,num=num)
+    y = np.linspace(start,end,num=num)
+    z = np.linspace(start,end,num=num)
+    g = np.meshgrid(x,y,z)
+    positions = np.vstack(map(np.ravel, g))
+    return positions.swapaxes(0,1)
 
 def load_mesh(path):
     return igl.read_triangle_mesh(str(path))
@@ -205,11 +216,15 @@ if __name__=="__main__":
     arg_parser.add_argument( "--separate_folders", type=int, default=1)
     arg_parser.add_argument('--output_dir', '-o', default='../datasets/shapenet_sem/processed/')
     arg_parser.add_argument( "--force", type=int, default=0)
+    arg_parser.add_argument( "--copy_meshes", type=int, default=0)
+    arg_parser.add_argument( "--importance_sample", type=int, default=0)
     #arg_parser.add_argument('--mkdir', action='store_true')
 
     args = arg_parser.parse_args()
 
     force = False if args.force == 0 else True
+    copy_meshes = False if args.copy_meshes == 0 else True
+    importance_sample = False if args.importance_sample == 0 else True
 
     root = pathlib.Path(args.acronym_root_dir)
     shapenetsem_root = pathlib.Path(args.shapenetsem_root_dir)
@@ -220,6 +235,7 @@ if __name__=="__main__":
     ignore = [
         '17a7a1a4761e9aa1d4bf2d5f775ffe5e'
     ]
+
     counter = 0
     max_model_count = 100000000 if args.max_model_count == -1 else args.max_model_count
     for h5_filename in all_paths:
@@ -244,6 +260,7 @@ if __name__=="__main__":
     target_sample_count = 250000
     importance_beta = 30
 
+    grid_query_points = gen_grid(-1,1, 64)
 
     for (model_path, object_id, class_id) in paths:
         print(f"loading {model_counter}/{model_count}")
@@ -280,7 +297,10 @@ if __name__=="__main__":
             popen.wait()
 
             if(not os.path.exists(manifold_model_path)):
-                print(f"Couldn't simplify {model_path} using full resolution")
+                print(f"Couldn't simplify {model_path} skipping")
+                if os.path.isfile(temp_model_path):
+                    os.remove(temp_model_path)
+                continue
                 simplified = False
                 shutil.copyfile(temp_model_path, manifold_model_path)
                 if os.path.isfile(temp_model_path):
@@ -343,22 +363,29 @@ if __name__=="__main__":
             np.savez(npz_output_path,sdf_points=sdf.astype(np.float32), filename=manifold_model_path, beta=importance_beta, classid=class_id, modelid=object_id)
             print(f'saved {npz_output_path}')
 
-            pc_sampling_target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
+            (grid_sdf_values, _, _, _) = igl.signed_distance(grid_query_points, v, f, return_normals=True)
+            grid_sdf_values = np.expand_dims(grid_sdf_values, axis=-1)
+            grid_sdf = np.concatenate((grid_query_points, grid_sdf_values), axis=-1)
+            np.savetxt(f"{output_dir}/sdf_grid_data.csv", grid_sdf, delimiter=",")
+            #pc_sampling_target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
             # really inefficient to reopen the mesh etc.  just testing right now.
-            print("sampling point cloud")
-            gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path, use_normals=simplified)
+            #print("sampling point cloud")
+            #gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path, use_normals=simplified)
 
 
-        # No need to run c++ sampler. python version does the same thing.
-        #command_line = ("data/preprocessing/build/sdf_gen",  manifold_model_path, output_dir, "|| true")
-        #print(f'Running {command_line} from cdw {os.getcwd()}')
-        #popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL)
-        #popen.wait()
+        csv_path = f'{output_dir}/sdf_data.csv'
+        if(not os.path.exists(csv_path) or force):
+            # No need to run c++ sampler. python version does the same thing.
+            command_line = ("data/preprocessing/build/sdf_gen",  manifold_model_path, output_dir, "|| true")
+            print(f'Running {command_line} from cdw {os.getcwd()}')
+            popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL)
+            popen.wait()
 
-        material_path = f"{model_path[:-4]}.mtl"
-        manifold_model_path = f"{model_path[:-4]}_manifold.obj"
-        command_line = f"cp {model_path} {material_path} {manifold_model_path} {output_dir}/"
-        popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
-        popen.wait()
+        if(copy_meshes):
+            material_path = f"{model_path[:-4]}.mtl"
+            manifold_model_path = f"{model_path[:-4]}_manifold.obj"
+            command_line = f"cp {model_path} {material_path} {manifold_model_path} {output_dir}/"
+            popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL, shell=True)
+            popen.wait()
 
                 
