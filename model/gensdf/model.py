@@ -92,8 +92,8 @@ class GenSDF(base_pl.Model):
         #enc_xyz = self.ff_enc(unlab_input, self.avals.to(self.device), self.bvals.to(self.device))
         decoder_input = torch.cat([shape_vecs, unlab_input], dim=-1)
         pred_sdf = self.decoder(decoder_input).unsqueeze(-1)
-        pc_pred = pred_sdf[:,query_xyz.shape[1]:]
-        pred_sdf = pred_sdf[:,:query_xyz.shape[1]]
+        pc_pred = pred_sdf[query_xyz.shape[1]:]
+        pred_sdf = pred_sdf[:query_xyz.shape[1]]
 
         
         #print("unlab input shape: ",unlab_input.shape)

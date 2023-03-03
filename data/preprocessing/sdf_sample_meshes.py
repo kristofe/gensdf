@@ -379,11 +379,10 @@ if __name__=="__main__":
             pc_sampling_target_path = f'{output_dir}/sdf_data.csv'
             #pc_sampling_target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
             # really inefficient to reopen the mesh etc.  just testing right now.
-            print("sampling point cloud")
-            gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path, use_normals=simplified)
+            #print("sampling point cloud")
+            #gensdf_sample(manifold_model_path, object_id, class_id, pc_sampling_target_path, use_normals=simplified)
 
 
-        '''
         csv_path = f'{output_dir}/sdf_data.csv'
         if(not os.path.exists(csv_path) or force):
             # No need to run c++ sampler. python version does the same thing.
@@ -391,7 +390,6 @@ if __name__=="__main__":
             print(f'Running {command_line} from cdw {os.getcwd()}')
             popen = subprocess.Popen(command_line, stderr=subprocess.DEVNULL)
             popen.wait()
-        '''
 
         if(copy_meshes):
             material_path = f"{model_path[:-4]}.mtl"
