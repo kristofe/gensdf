@@ -326,6 +326,9 @@ if __name__=="__main__":
                     print(f"couldn't coerce {manifold_model_path} into a single mesh")
                     continue
 
+                if(not m.is_watertight):
+                    print(f"{manifold_model_path} is not watertight skipping")
+                    continue
             except:
                 print(f"Couldn't load {model_path} skipping")
                 continue
@@ -374,7 +377,7 @@ if __name__=="__main__":
             grid_sdf_values = np.expand_dims(grid_sdf_values, axis=-1)
             grid_sdf = np.concatenate((grid_query_points, grid_sdf_values), axis=-1)
             #np.savetxt(f"{output_dir}/sdf_grid_data.csv", grid_sdf, delimiter=",")
-            pd.DataFrame(grid_sdf.astype(np.float32)).to_csv(f'{output_dir}/sdf_grid_data.csv')
+            pd.DataFrame(grid_sdf.astype(np.float32)).to_csv(f'{output_dir}/grid_gt.csv')
 
             pc_sampling_target_path = f'{output_dir}/sdf_data.csv'
             #pc_sampling_target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"

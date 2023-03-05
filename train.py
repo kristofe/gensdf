@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
     arg_parser.add_argument(
         "--batch_size", "-b",
-        default=2, type=int
+        default=16, type=int
     )
 
     arg_parser.add_argument(
