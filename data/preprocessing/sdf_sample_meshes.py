@@ -241,8 +241,7 @@ if __name__=="__main__":
         '16b4dfae678239a42d470147ee1bb468'
     ]
     
-    force_list = ["1004f30be305f33d28a1548e344f0e2e",
-			"1ae8ed2f5bf117f067994ca435825ef"]
+    force_list = ["9b8e7652eac8daef33e6ceca7fd89911"]
     
     counter = 0
     force = True if len(force_list) > 0 else False
