@@ -87,12 +87,10 @@ def playground():
         print(filepath.parts)
 
 def gen_grid(start, end, num):
-    x = np.linspace(start,end,num=num)
-    y = np.linspace(start,end,num=num)
-    z = np.linspace(start,end,num=num)
-    g = np.meshgrid(x,y,z)
-    positions = np.vstack(map(np.ravel, g))
-    return positions.swapaxes(0,1)
+    p = torch.linspace(start, end, steps=num, dtype=torch.float32)
+    pos = torch.stack(torch.meshgrid(p,p,p), dim = -1).view(-1,3)
+    return pos.numpy()
+
 
 def load_mesh(path):
     return igl.read_triangle_mesh(str(path))
@@ -178,7 +176,7 @@ def gensdf_sample(path, object_id, class_id, target_path, use_normals):
 
     if(use_csv):
         #np.savetxt(target_path, sdf.astype(np.float32), delimiter=",")
-        pd.DataFrame(sdf.astype(np.float32)).to_csv(target_path)
+        pd.DataFrame(sdf.astype(np.float32)).to_csv(target_path, index=False, header=False)
     else:
         np.savez(target_path,sdf_points=sdf.astype(np.float32), filename=str(path), beta=importance_beta, classid=class_id, modelid=object_id)
     print(f'saved {target_path}')
@@ -242,8 +240,13 @@ if __name__=="__main__":
         '17a7a1a4761e9aa1d4bf2d5f775ffe5e',
         '16b4dfae678239a42d470147ee1bb468'
     ]
-
+    
+    force_list = ["1004f30be305f33d28a1548e344f0e2e",
+			"1ae8ed2f5bf117f067994ca435825ef"]
+    
     counter = 0
+    force = True if len(force_list) > 0 else False
+
     max_model_count = 100000000 if args.max_model_count == -1 else args.max_model_count
     for h5_filename in all_paths:
         if h5_filename.is_file:
@@ -254,6 +257,10 @@ if __name__=="__main__":
                 if shapenet_id in ignore:
                     print(f"ignoring {shapenet_id}")
                     continue
+
+                if force and not(shapenet_id in force_list):
+                    continue
+
                 object_class = filepath.parts[-2:-1][0]
                 shapenet_model_path = f'{args.shapenetsem_root_dir}{str(shapenet_id)}.obj'
                 paths.append((shapenet_model_path, shapenet_id, object_class))
@@ -377,7 +384,7 @@ if __name__=="__main__":
             grid_sdf_values = np.expand_dims(grid_sdf_values, axis=-1)
             grid_sdf = np.concatenate((grid_query_points, grid_sdf_values), axis=-1)
             #np.savetxt(f"{output_dir}/sdf_grid_data.csv", grid_sdf, delimiter=",")
-            pd.DataFrame(grid_sdf.astype(np.float32)).to_csv(f'{output_dir}/grid_gt.csv')
+            pd.DataFrame(grid_sdf.astype(np.float32)).to_csv(f'{output_dir}/grid_gt.csv', index=False, header=False)
 
             pc_sampling_target_path = f'{output_dir}/sdf_data.csv'
             #pc_sampling_target_path = f"{output_dir}{object_id}_gensdf_sampling.npz"
